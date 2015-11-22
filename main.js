@@ -78,7 +78,7 @@ bot.login(manifest.email,manifest.pw)
 	    		if(youtube.playUrl(url) < 0)
 					bot.sendMessage(message.channel,"Maybe your link is wrong?");
 	    		else
-	    			bot.sendMessage(message.channel,"Playing Youtube"); 		
+	    			bot.sendMessage(message.channel,"Added link"); 		
 	    		
 	    	}    			
 	    }

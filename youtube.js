@@ -1,4 +1,4 @@
-"use strict"
+'use strict'
 
 const youtubeStream = require('youtube-audio-stream');
 const _ = require('lodash');
@@ -18,13 +18,13 @@ module.exports = class ytStream{
 			this.stream.end();
 			this.client.voiceConnection.stopPlaying();
 			this.playing = false;
-			console.log("stopped playing youtube");
+			console.log('stop signal');
 		}
 	}
 
 	addToPlaylist(url){
 		this.playList.push(url);
-		console.log("pushed to playlist, length: "+this.playList.length);
+		console.log('pushed to playlist, length: '+this.playList.length);
 	}
 
 	nextTrack(){
@@ -34,9 +34,8 @@ module.exports = class ytStream{
 		}else
 			if(!this.stream){
 				this.playing = false;
-				console.log("will stop playing now!");
+				console.log('no more songs to play');
 			}		
-
 	}
 
 	prevTrack(){
@@ -46,10 +45,8 @@ module.exports = class ytStream{
 		}else
 			if(!this.stream){
 				this.playing = false;
-				console.log("will stop playing now!");
+				console.log('no more songs to play');
 			}
-				
-			
 	}
 
 	getUrl(index){
@@ -57,7 +54,7 @@ module.exports = class ytStream{
 	}
 
 	play(index){
-		console.log("playing index: "+index);
+		console.log('playing index: '+index);
 		let audio;
 		if(this.stream)
 			this.stopPlay();
@@ -66,15 +63,14 @@ module.exports = class ytStream{
 			this.playing = true;
 			this.stream.on('end', () => setTimeout(()=>{
 				this.stream = false;
-				console.log("track ended");
+				console.log('track ended');
 				this.nextTrack();
 			}, 10000));
-    		this.stream.on('error',(error)=>console.log(error));
-    		this.client.voiceConnection.playRawStream(this.stream).then(finished => {
-    			return 1;
-    		});
+			this.stream.on('error',(error)=>console.log(error));
+			this.client.voiceConnection.playRawStream(this.stream).then(() => {return 1;});
 		}catch(error){
-			console.log(error);
+			console.error(error.stack
+				);
 			this.playList.splice(this.playIndex,1);
 			this.nextTrack();
 			return -1;
@@ -84,27 +80,22 @@ module.exports = class ytStream{
 	playUrl(url){
 		this.addToPlaylist(url);
 		if(this.playList.length == 1){
-			console.log("playing first song");
+			console.log('playing first song');
 			return this.play(this.playIndex);
 		}
 		if(this.playing == false){
 			this.nextTrack();
 		}
-			
 	}
 
 	list(channel){
-		let i = 0;
-		let message = "\n";
-		_.map(this.playList,item =>{
-			
-			if(i == this.playIndex)
-				message += "->";
-			message = message+item+"\n";
-			i++;
-		});
-		this.client.sendMessage(channel,message);
+		const ret = '\n' + _.map(this.playList, (item, idx) =>{
+			if(idx === this.playIndex) {
+				return "->" + item;
+			}
+			return idx+") "+item;
+		}).join('\n');
+		this.client.sendMessage(channel, ret);
 	}
-
 }
 
