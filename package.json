@@ -1,0 +1,27 @@
+{
+  "name": "bot_js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "dependencies": {
+    "bluebird": "^3.0.5",
+    "cheerio": "^0.19.0",
+    "lodash": "^3.10.1",
+    "read-json": "^1.0.0",
+    "youtube-audio-stream": "0.0.13"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koriwi/GamingCorpDiscordBot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/koriwi/GamingCorpDiscordBot/issues"
+  },
+  "homepage": "https://github.com/koriwi/GamingCorpDiscordBot#readme"
+}
