@@ -4,7 +4,8 @@ const Discord = require('discord.js');
 const youtubeStream = require('youtube-audio-stream')
 const JokeFactory = require('./joke');
 const Promise = require('bluebird');
-const readJSON = require('read-json');
+const fs = Promise.promisifyAll(require('fs'));
+const manifest = require('./credentials');
 
 const bot = new Discord.Client();
 const jokes = new JokeFactory();
@@ -31,17 +32,6 @@ jokes.loadJokes().then(() => {
 	console.log('Loaded jokes, ready');
 })
 
-
-new Promise((resolve,reject)=>{
-	readJSON('./credentials.json',(error,manifest)=>{
-		bot.login(manifest.email,manifest.pw).then(()=>{
-			return new Promise((resolve,reject)=>{
-				bot.once('ready',resolve);
-				bot.once('error',reject);
-			})
-		}).then(()=>resolve())
-	})
-})
 .then(() => {
 
 	const server = bot.servers.get('id','103456218546192384');
@@ -87,22 +77,26 @@ new Promise((resolve,reject)=>{
 
 	    if(message.content.indexOf("!bot play") > -1){
 	    	if(!bot.voiceConnection){
-	    		console.log("voice not connected");	
+	    		console.log("Voice not connected");	
 	    	}else{
 	    		stopPlay();
-	    		console.log("Downloading...");
-
 	    		const index = message.content.indexOf("!bot play")+("!bot play").length;
 	    		const url = message.content.substring(index).trim();
 	    		let audio;
 
-	    		stream = youtubeStream(url);
-	    		stream.on('end', () => setTimeout(stopPlay, 8000));
-	    		stream.on('error',(error)=>console.log(error));
-	    		//bot.voiceConnection.init();
-	    		bot.voiceConnection.playRawStream(stream).then(finished => {
-	    			bot.sendMessage(message.channel,"Playing Youtube");
-	    		});
+	    		try{
+	    			stream = youtubeStream(url);
+	    			stream.on('end', () => setTimeout(stopPlay, 8000));
+		    		stream.on('error',(error)=>console.log(error));
+		    		//bot.voiceConnection.init();
+		    		bot.voiceConnection.playRawStream(stream).then(finished => {
+		    			bot.sendMessage(message.channel,"Playing Youtube");
+		    		});
+	    		}catch(error){
+	    			bot.sendMessage(message.channel,"Maybe your link is wrong?");
+	    		}
+	    		
+	    		
 	    	}    			
 	    }
 
