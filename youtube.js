@@ -15,7 +15,6 @@ module.exports = class ytStream{
 
 	stopPlay(){
 		if(this.client.voiceConnection && this.stream){
-			this.stream.end();
 			this.client.voiceConnection.stopPlaying();
 			this.playing = false;
 			console.log('stop signal');
@@ -62,10 +61,10 @@ module.exports = class ytStream{
 			this.stream = youtubeStream(this.getUrl(index));
 			this.playing = true;
 			this.stream.on('end', () => setTimeout(()=>{
-				this.stream = false;
 				console.log('track ended');
+				this.stopPlay();
 				this.nextTrack();
-			}, 10000));
+			}, 12000));
 			this.stream.on('error',(error)=>console.log(error));
 			this.client.voiceConnection.playRawStream(this.stream).then(() => {return 1;});
 		}catch(error){
