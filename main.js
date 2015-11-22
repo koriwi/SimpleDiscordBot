@@ -1,37 +1,30 @@
 'use strict';
 
 const Discord = require('discord.js');
-const youtubeStream = require('youtube-audio-stream')
 const JokeFactory = require('./joke');
 const Promise = require('bluebird');
 const fs = Promise.promisifyAll(require('fs'));
 const manifest = require('./credentials');
+const ytStream = require('./youtube.js');
 
 const bot = new Discord.Client();
 const jokes = new JokeFactory();
+const youtube = new ytStream();
 
 let jokesReady = false;
-let stream = false;
-
-
-function stopPlay(){
-	try{
-		if(bot.voiceConnection && stream){
-			stream.end();
-			bot.voiceConnection.stopPlaying();
-		}
-	}catch(error){
-		console.log(error);
-	}
-	
-		
-}
 
 jokes.loadJokes().then(() => {
 	jokesReady = true;
 	console.log('Loaded jokes, ready');
 })
 
+bot.login(manifest.email,manifest.pw)
+.then(()=>{
+	return new Promise((resolve,reject)=>{
+		bot.once('ready',resolve);
+		bot.once('error',reject);
+	})
+})
 .then(() => {
 
 	const server = bot.servers.get('id','103456218546192384');
@@ -79,29 +72,20 @@ jokes.loadJokes().then(() => {
 	    	if(!bot.voiceConnection){
 	    		console.log("Voice not connected");	
 	    	}else{
-	    		stopPlay();
+	    		youtube.stopPlay(bot);
 	    		const index = message.content.indexOf("!bot play")+("!bot play").length;
 	    		const url = message.content.substring(index).trim();
-	    		let audio;
 
-	    		try{
-	    			stream = youtubeStream(url);
-	    			stream.on('end', () => setTimeout(stopPlay, 8000));
-		    		stream.on('error',(error)=>console.log(error));
-		    		//bot.voiceConnection.init();
-		    		bot.voiceConnection.playRawStream(stream).then(finished => {
-		    			bot.sendMessage(message.channel,"Playing Youtube");
-		    		});
-	    		}catch(error){
-	    			bot.sendMessage(message.channel,"Maybe your link is wrong?");
-	    		}
-	    		
+	    		if(youtube.playUrl(url,bot) < 0)
+					bot.sendMessage(message.channel,"Maybe your link is wrong?");
+	    		else
+	    			bot.sendMessage(message.channel,"Playing Youtube"); 		
 	    		
 	    	}    			
 	    }
 
 	    if(message.content === '!bot stop'){
-	    	stopPlay();
+	    	youtube.stopPlay();
 	    	bot.sendMessage(message.channel,"Stopping Youtube");
 	    } 
 	});
