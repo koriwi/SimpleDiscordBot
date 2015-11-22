@@ -18,12 +18,9 @@ function stopPlay(){
 		if(bot.voiceConnection && stream){
 			stream.end();
 			bot.voiceConnection.stopPlaying();
-			
-			return;
 		}
 	}catch(error){
 		console.log(error);
-
 	}
 	
 		
