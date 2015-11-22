@@ -9,7 +9,7 @@ const ytStream = require('./youtube.js');
 
 const bot = new Discord.Client();
 const jokes = new JokeFactory();
-const youtube = new ytStream();
+let youtube = false;
 
 let jokesReady = false;
 
@@ -26,7 +26,7 @@ bot.login(manifest.email,manifest.pw)
 	})
 })
 .then(() => {
-
+	youtube = new ytStream(bot);
 	const server = bot.servers.get('id','103456218546192384');
 	console.log('ServerID: '+server.id)
 
@@ -68,15 +68,14 @@ bot.login(manifest.email,manifest.pw)
 	    		
 	    }
 
-	    if(message.content.indexOf("!bot play") > -1){
+	    if(message.content.indexOf("!bot playurl") > -1){
 	    	if(!bot.voiceConnection){
 	    		console.log("Voice not connected");	
 	    	}else{
-	    		youtube.stopPlay(bot);
 	    		const index = message.content.indexOf("!bot play")+("!bot play").length;
 	    		const url = message.content.substring(index).trim();
 
-	    		if(youtube.playUrl(url,bot) < 0)
+	    		if(youtube.playUrl(url) < 0)
 					bot.sendMessage(message.channel,"Maybe your link is wrong?");
 	    		else
 	    			bot.sendMessage(message.channel,"Playing Youtube"); 		
