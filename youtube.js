@@ -1,7 +1,7 @@
 "use strict"
 
 const youtubeStream = require('youtube-audio-stream');
-
+const _ = require('lodash');
 
 module.exports = class ytStream{
 
@@ -17,6 +17,7 @@ module.exports = class ytStream{
 		if(this.client.voiceConnection && this.stream){
 			this.stream.end();
 			this.client.voiceConnection.stopPlaying();
+			this.playing = false;
 			console.log("stopped playing youtube");
 		}
 	}
@@ -29,11 +30,12 @@ module.exports = class ytStream{
 	nextTrack(){
 		if(this.playIndex+1 <= this.playList.length-1){
 			this.playIndex += 1;
-			this.playing = true;
 			this.play(this.playIndex);			
 		}else
-			this.playing = false;
-			
+			if(!this.stream){
+				this.playing = false;
+				console.log("will stop playing now!");
+			}		
 
 	}
 
@@ -42,7 +44,11 @@ module.exports = class ytStream{
 			this.playIndex -= 1;
 			this.play(this.playIndex);
 		}else
-			this.playing = false;
+			if(!this.stream){
+				this.playing = false;
+				console.log("will stop playing now!");
+			}
+				
 			
 	}
 
@@ -57,13 +63,17 @@ module.exports = class ytStream{
 			this.stopPlay();
 		try{
 			this.stream = youtubeStream(this.getUrl(index));
-			this.stream.on('end', () => setTimeout(this.nextTrack(), 10000));
+			this.playing = true;
+			this.stream.on('end', () => setTimeout(()=>{
+				this.stream = false;
+				console.log("track ended");
+				this.nextTrack();
+			}, 10000));
     		this.stream.on('error',(error)=>console.log(error));
     		this.client.voiceConnection.playRawStream(this.stream).then(finished => {
     			return 1;
     		});
 		}catch(error){
-			console.log("CAREFULL");
 			console.log(error);
 			this.playList.splice(this.playIndex,1);
 			this.nextTrack();
@@ -81,6 +91,19 @@ module.exports = class ytStream{
 			this.nextTrack();
 		}
 			
+	}
+
+	list(channel){
+		let i = 0;
+		let message = "\n";
+		_.map(this.playList,item =>{
+			
+			if(i == this.playIndex)
+				message += "->";
+			message = message+item+"\n";
+			i++;
+		});
+		this.client.sendMessage(channel,message);
 	}
 
 }

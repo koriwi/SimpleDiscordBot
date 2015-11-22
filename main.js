@@ -87,6 +87,18 @@ bot.login(manifest.email,manifest.pw)
 	    	youtube.stopPlay();
 	    	bot.sendMessage(message.channel,"Stopping Youtube");
 	    } 
+
+	    if(message.content === '!bot >'){
+	    	youtube.nextTrack();
+	    }
+
+	   	if(message.content === '!bot <'){
+	    	youtube.prevTrack();
+	    }
+
+	   	if(message.content === '!bot playlist'){
+	    	youtube.list(message.channel);
+	    }
 	});
 	
 }).catch(error => console.error(error));
