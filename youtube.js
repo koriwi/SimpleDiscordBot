@@ -2,6 +2,8 @@
 
 const youtubeStream = require('youtube-audio-stream');
 const _ = require('lodash');
+const ytdl = require('ytdl-core');
+const Promise = require('bluebird');
 
 module.exports = class ytStream{
 
@@ -21,43 +23,50 @@ module.exports = class ytStream{
 		}
 	}
 
-	addToPlaylist(url){
-		this.playList.push(url);
+	addToPlaylist(url,title){
+		let obj = {
+			url:url,
+			title:title
+		}
+		this.playList.push(obj);
 		console.log('pushed to playlist, length: '+this.playList.length);
 	}
 
 	nextTrack(){
 		if(this.playIndex+1 <= this.playList.length-1){
-			this.playIndex += 1;
-			this.play(this.playIndex);			
-		}else
-			if(!this.stream){
-				this.playing = false;
-				console.log('no more songs to play');
-			}		
+			this.play(this.playIndex+1);			
+		}else{
+			this.playing = false;
+			console.log('no more songs to play');
+		}		
 	}
 
 	prevTrack(){
-		if(this.playIndex-1 >= 0){
-			this.playIndex -= 1;
-			this.play(this.playIndex);
-		}else
-			if(!this.stream){
-				this.playing = false;
-				console.log('no more songs to play');
-			}
+		if(this.playIndex-1 >= 0)
+			this.play(this.playIndex-1);
+		else{
+			this.playing = false;
+			console.log('no more songs to play');
+		}
 	}
 
 	getUrl(index){
-		return this.playList[index];
+		return this.playList[index].url;
 	}
 
 	play(index){
 		console.log('playing index: '+index);
 		let audio;
-		if(this.stream)
-			this.stopPlay();
-		try{
+		
+		if(index >=0 && index < this.playList.length){
+			console.log("playing: "+this.playing);
+			if(index == this.playIndex && this.playing === true)
+				return 0;
+			
+			this.playIndex = index;
+
+			if(this.stream)
+				this.stopPlay();
 			this.stream = youtubeStream(this.getUrl(index));
 			this.playing = true;
 			this.stream.on('end', () => setTimeout(()=>{
@@ -66,33 +75,39 @@ module.exports = class ytStream{
 				this.nextTrack();
 			}, 12000));
 			this.stream.on('error',(error)=>console.log(error));
-			this.client.voiceConnection.playRawStream(this.stream).then(() => {return 1;});
-		}catch(error){
-			console.error(error.stack
-				);
-			this.playList.splice(this.playIndex,1);
-			this.nextTrack();
-			return -1;
+			this.client.voiceConnection.playRawStream(this.stream).then(() => {
+				console.log(this.playList[this.playIndex].title);
+				console.log(typeof this.playList[this.playIndex].title)
+				return this.playList[this.playIndex].title;
+			});
+			
 		}
+		return -1;
+
 	}
 
 	playUrl(url){
-		this.addToPlaylist(url);
-		if(this.playList.length == 1){
-			console.log('playing first song');
-			return this.play(this.playIndex);
-		}
-		if(this.playing == false){
-			this.nextTrack();
-		}
+		const getInfoAsync = Promise.promisify(ytdl.getInfo);
+		getInfoAsync(url).then(info=>{
+			if(info.title){
+				this.addToPlaylist(url,info.title);
+			}
+		}).then(()=>{
+			if(this.playList.length == 1){
+				console.log('playing first song');
+				return this.play(this.playIndex);
+			}
+		});
+
+		
 	}
 
 	list(channel){
 		const ret = '\n' + _.map(this.playList, (item, idx) =>{
 			if(idx === this.playIndex) {
-				return "->" + item;
+				return "->" + item.title;
 			}
-			return idx+") "+item;
+			return idx+") "+item.title;
 		}).join('\n');
 		this.client.sendMessage(channel, ret);
 	}

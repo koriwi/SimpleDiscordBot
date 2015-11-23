@@ -9,7 +9,8 @@
     "discord.js": "^5.0.1",
     "lodash": "^3.10.1",
     "request": "^2.67.0",
-    "youtube-audio-stream": "0.0.13"
+    "youtube-audio-stream": "0.0.13",
+    "ytdl-core": "^0.7.6"
   },
   "devDependencies": {},
   "scripts": {

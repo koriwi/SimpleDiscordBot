@@ -13,6 +13,20 @@ let youtube = false;
 
 let jokesReady = false;
 
+function getParam(msg){
+	const temp = msg.split(' ');
+	let par = temp.slice();
+	par.splice(0,2);
+	
+	let param = {
+		recipient: temp[0],
+		task: temp[1],
+		params: par
+	}
+	console.log("parameter: "+param.params);
+	return param;
+}
+
 jokes.loadJokes().then(() => {
 	jokesReady = true;
 	console.log('Loaded jokes, ready');
@@ -34,71 +48,83 @@ bot.login(manifest.email,manifest.pw)
 
 	bot.on('message', message => {
 
-	    if(message.content === 'ping')
-	        bot.reply(message, 'pong',(e,m)=>{
-	       		console.log('replied to '+message.author.username);
-	        });
+		let params = getParam(message.content);
+		console.log(params);
+		if(params.recipient === '!bot'){
+			if(message.content === 'ping')
+				bot.reply(message, 'pong',(e,m)=>{
+			   		console.log('replied to '+message.author.username);
+				});
 
-	    if(message.content === '!bot joke' && jokesReady == true){
-	    	let joke = jokes.getJoke();
-	    	let jokeText =  joke.question+'\n'+joke.answer;
-	    	bot.sendMessage(message.channel, jokeText, (e,m)=>{
-	       		console.log('replied to '+message.author.username);
-	        });
-	    }
+			if(params.task === 'joke' && jokesReady == true){
+				let joke = jokes.getJoke();
+				let jokeText =  joke.question+'\n'+joke.answer;
+				bot.sendMessage(message.channel, jokeText, (e,m)=>{
+			   		console.log('replied to '+message.author.username);
+				});
+			}
 
-	    if(message.content === '!bot antijoke' && jokesReady == true){
-	    	let joke1 = jokes.getJoke();
-	    	let joke2 = jokes.getJoke();
-	    	let jokeText =  joke1.question+'\n'+joke2.answer;
-	    	bot.sendMessage(message.channel, jokeText, (e,m)=>{
-	       		console.log('replied to '+message.author.username);
-	        });
-	    }
+			if(params.task === 'antijoke' && jokesReady == true){
+				let joke1 = jokes.getJoke();
+				let joke2 = jokes.getJoke();
+				let jokeText =  joke1.question+'\n'+joke2.answer;
+				bot.sendMessage(message.channel, jokeText, (e,m)=>{
+			   		console.log('replied to '+message.author.username);
+				});
+			}
 
-	    if(message.content.indexOf("!bot joinvoice")> -1){
-	    	const index = message.content.indexOf("!bot joinvoice")+("!bot joinvoice").length;
-	    	const ch = message.content.substring(index).trim();
-	    	let vchannel = server.channels.get('name',ch);
-	    	
-	    	if(vchannel){
-	    		console.log(vchannel.name);
-	    		bot.joinVoiceChannel(vchannel);
-	    	}
-	    		
-	    }
+			if(params.task === 'joinvoice'){
+				let vchannel = server.channels.get('name',params.params.join(' ').trim());
+				
+				if(vchannel){
+					console.log(vchannel.name);
+					bot.joinVoiceChannel(vchannel);
+				}
+					
+			}
 
-	    if(message.content.indexOf("!bot playurl") > -1){
-	    	if(!bot.voiceConnection){
-	    		console.log("Voice not connected");	
-	    	}else{
-	    		const index = message.content.indexOf("!bot play")+("!bot play").length;
-	    		const url = message.content.substring(index).trim();
+			if(!bot.voiceConnection){
+				console.log("Voice not connected");
+			}else{
+				if(params.task === 'playurl'){
+					if(youtube.playUrl(params.params[0]) < 0)
+						bot.sendMessage(message.channel,"Maybe your link is wrong?");
+					else
+						bot.sendMessage(message.channel,"Added link"); 									
+				}
 
-	    		if(youtube.playUrl(url) < 0)
-					bot.sendMessage(message.channel,"Maybe your link is wrong?");
-	    		else
-	    			bot.sendMessage(message.channel,"Added link"); 		
-	    		
-	    	}    			
-	    }
+				if(params.task === 'stop'){
+					youtube.stopPlay();
+					bot.sendMessage(message.channel,"Stopping Youtube");
+				} 
 
-	    if(message.content === '!bot stop'){
-	    	youtube.stopPlay();
-	    	bot.sendMessage(message.channel,"Stopping Youtube");
-	    } 
+				if(params.task === '>'){
+					youtube.nextTrack();
+				}
 
-	    if(message.content === '!bot >'){
-	    	youtube.nextTrack();
-	    }
+			   	if(params.task === '<'){
+					youtube.prevTrack();
+				}
 
-	   	if(message.content === '!bot <'){
-	    	youtube.prevTrack();
-	    }
+			   	if(params.task === 'playlist'){
+					youtube.list(message.channel);
+				}
 
-	   	if(message.content === '!bot playlist'){
-	    	youtube.list(message.channel);
-	    }
+				if(params.task ==='play'){
+					getParam(message.content);
+					const status = youtube.play(params.params[0]);
+					if(typeof status === "number"){
+						if(status === -1)
+							bot.sendMessage(message.channel,"Number not in playlist");
+						if(status === 0)
+							bot.sendMessage(message.channel,"Is allready playing :)");
+					}else{
+						bot.sendMessage(message.channel,"Added "+status);
+					}
+				}
+			}
+		}
+		
 	});
 	
 }).catch(error => console.error(error));
