@@ -41,7 +41,7 @@ bot.login(manifest.email,manifest.pw)
 })
 .then(() => {
 	youtube = new ytStream(bot);
-	const server = bot.servers.get('id','103456218546192384');
+	const server = bot.servers.get('id',manifest.serverid);
 	console.log('ServerID: '+server.id)
 
 	let defaultChannel = server.channels.get('name', 'bot')

@@ -23,11 +23,17 @@ module.exports = class ytStream{
 		}
 	}
 
-	addToPlaylist(url,title){
+	addToPlaylist(item){
 		let obj = {
-			url:url,
-			title:title
+			url:item.loaderUrl,
+			title:item.title,
+			seconds:item.length_seconds
 		}
+		if(this.playList.length === 10){
+			this.playList.splice(0,1);
+			this.playIndex += -1;
+		}
+			
 		this.playList.push(obj);
 		console.log('pushed to playlist, length: '+this.playList.length);
 	}
@@ -55,15 +61,16 @@ module.exports = class ytStream{
 	}
 
 	play(index){
+		index = parseInt(index);
 		console.log('playing index: '+index);
 		let audio;
 		
-		if(index <0 || index >= this.playList.length)
+		if(index <0 || index >= this.playList.length || index == "NaN")
 			return Promise.reject(new RangeError('Song not in playlist'));
 
 		console.log("playing: "+this.playing);
 
-		if(index == this.playIndex && this.playing === true)
+		if(index === this.playIndex && this.playing === true)
 			return Promise.reject(new Error('Song allready playing'));
 		
 		this.playIndex = index;
@@ -74,9 +81,9 @@ module.exports = class ytStream{
 		this.playing = true;
 		this.stream.on('end', () => setTimeout(()=>{
 			console.log('track ended');
-			this.stopPlay();
-			this.nextTrack();
-		}, 12000));
+			//this.stopPlay();
+			//this.nextTrack();
+		}, 4000));
 		this.stream.on('error',(error)=>console.log(error));
 		return this.client.voiceConnection.playRawStream(this.stream).then(() => {
 			return this.playList[this.playIndex].title;
@@ -87,14 +94,14 @@ module.exports = class ytStream{
 		const getInfoAsync = Promise.promisify(ytdl.getInfo);
 		return getInfoAsync(url).then(info=>{
 			if(info.title){
-				this.addToPlaylist(url,info.title);
+				this.addToPlaylist(info);
 			}
 		}).then(()=>{
 			if(this.playList.length == 1){
 				console.log('playing first song');
 				this.play(this.playIndex);
 			}
-			return this.playList[this.playIndex].title;
+			return this.playList[this.playList.length-1].title;
 		});
 
 		
@@ -102,9 +109,8 @@ module.exports = class ytStream{
 
 	list(channel){
 		const ret = '\n' + _.map(this.playList, (item, idx) =>{
-			if(idx === this.playIndex) {
+			if(idx === this.playIndex)
 				return "->" + item.title;
-			}
 			return idx+") "+item.title;
 		}).join('\n');
 		this.client.sendMessage(channel, ret);
