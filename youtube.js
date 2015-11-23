@@ -58,45 +58,43 @@ module.exports = class ytStream{
 		console.log('playing index: '+index);
 		let audio;
 		
-		if(index >=0 && index < this.playList.length){
-			console.log("playing: "+this.playing);
-			if(index == this.playIndex && this.playing === true)
-				return 0;
-			
-			this.playIndex = index;
+		if(index <0 || index >= this.playList.length)
+			return Promise.reject(new RangeError('Song not in playlist'));
 
-			if(this.stream)
-				this.stopPlay();
-			this.stream = youtubeStream(this.getUrl(index));
-			this.playing = true;
-			this.stream.on('end', () => setTimeout(()=>{
-				console.log('track ended');
-				this.stopPlay();
-				this.nextTrack();
-			}, 12000));
-			this.stream.on('error',(error)=>console.log(error));
-			this.client.voiceConnection.playRawStream(this.stream).then(() => {
-				console.log(this.playList[this.playIndex].title);
-				console.log(typeof this.playList[this.playIndex].title)
-				return this.playList[this.playIndex].title;
-			});
-			
-		}
-		return -1;
+		console.log("playing: "+this.playing);
 
+		if(index == this.playIndex && this.playing === true)
+			return Promise.reject(new Error('Song allready playing'));
+		
+		this.playIndex = index;
+
+		if(this.stream)
+			this.stopPlay();
+		this.stream = youtubeStream(this.getUrl(index));
+		this.playing = true;
+		this.stream.on('end', () => setTimeout(()=>{
+			console.log('track ended');
+			this.stopPlay();
+			this.nextTrack();
+		}, 12000));
+		this.stream.on('error',(error)=>console.log(error));
+		return this.client.voiceConnection.playRawStream(this.stream).then(() => {
+			return this.playList[this.playIndex].title;
+		});
 	}
 
 	playUrl(url){
 		const getInfoAsync = Promise.promisify(ytdl.getInfo);
-		getInfoAsync(url).then(info=>{
+		return getInfoAsync(url).then(info=>{
 			if(info.title){
 				this.addToPlaylist(url,info.title);
 			}
 		}).then(()=>{
 			if(this.playList.length == 1){
 				console.log('playing first song');
-				return this.play(this.playIndex);
+				this.play(this.playIndex);
 			}
+			return this.playList[this.playIndex].title;
 		});
 
 		

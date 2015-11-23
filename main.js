@@ -87,10 +87,12 @@ bot.login(manifest.email,manifest.pw)
 				console.log("Voice not connected");
 			}else{
 				if(params.task === 'playurl'){
-					if(youtube.playUrl(params.params[0]) < 0)
-						bot.sendMessage(message.channel,"Maybe your link is wrong?");
-					else
-						bot.sendMessage(message.channel,"Added link"); 									
+					youtube.playUrl(params.params[0])
+					.then(title=>{
+						bot.sendMessage(message.channel,"Added "+title);
+					});
+						
+													
 				}
 
 				if(params.task === 'stop'){
@@ -112,19 +114,15 @@ bot.login(manifest.email,manifest.pw)
 
 				if(params.task ==='play'){
 					getParam(message.content);
-					const status = youtube.play(params.params[0]);
-					if(typeof status === "number"){
-						if(status === -1)
-							bot.sendMessage(message.channel,"Number not in playlist");
-						if(status === 0)
-							bot.sendMessage(message.channel,"Is allready playing :)");
-					}else{
-						bot.sendMessage(message.channel,"Added "+status);
-					}
+					youtube.play(params.params[0]).then((title)=> {
+						bot.sendMessage(message.channel,"Playing "+title);
+					}).catch(error=>{
+						console.error(error);
+					});
 				}
 			}
 		}
 		
 	});
 	
-}).catch(error => console.error(error));
+}).catch(error => console.error(error.stack));
