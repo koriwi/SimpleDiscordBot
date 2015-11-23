@@ -65,10 +65,10 @@ module.exports = class ytStream{
 		console.log('playing index: '+index);
 		let audio;
 		
-		if(index <0 || index >= this.playList.length || index == "NaN")
+		if(index <0 || index >= this.playList.length || index == 'NaN')
 			return Promise.reject(new RangeError('Song not in playlist'));
 
-		console.log("playing: "+this.playing);
+		console.log('playing: '+this.playing);
 
 		if(index === this.playIndex && this.playing === true)
 			return Promise.reject(new Error('Song allready playing'));
@@ -77,17 +77,23 @@ module.exports = class ytStream{
 
 		if(this.stream)
 			this.stopPlay();
+
 		this.stream = youtubeStream(this.getUrl(index));
 		this.playing = true;
-		this.stream.on('end', () => setTimeout(()=>{
-			console.log('track ended');
-			//this.stopPlay();
-			//this.nextTrack();
-		}, 4000));
+
 		this.stream.on('error',(error)=>console.log(error));
-		return this.client.voiceConnection.playRawStream(this.stream).then(() => {
+		this.client.voiceConnection.playRawStream(this.stream)
+		.then((intent) => {
+			intent.once('end',()=>{
+				console.log('track ended');
+				this.nextTrack();
+			});		
 			return this.playList[this.playIndex].title;
+		}).catch(error=>{
+			console.log(error.stack);
+			throw error;
 		});
+		
 	}
 
 	playUrl(url){
@@ -110,8 +116,8 @@ module.exports = class ytStream{
 	list(channel){
 		const ret = '\n' + _.map(this.playList, (item, idx) =>{
 			if(idx === this.playIndex)
-				return "->" + item.title;
-			return idx+") "+item.title;
+				return '->' + item.title;
+			return idx+') '+item.title;
 		}).join('\n');
 		this.client.sendMessage(channel, ret);
 	}
