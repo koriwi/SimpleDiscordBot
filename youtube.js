@@ -39,9 +39,9 @@ module.exports = class ytStream{
 	}
 
 	nextTrack(){
-		if(this.playIndex+1 <= this.playList.length-1){
+		if(this.playIndex+1 <= this.playList.length-1)
 			this.play(this.playIndex+1);			
-		}else{
+		else{
 			this.playing = false;
 			console.log('no more songs to play');
 		}		
