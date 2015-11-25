@@ -101,12 +101,14 @@ module.exports = class ytStream{
 			if(info.title){
 				this.addToPlaylist(info);
 			}
-		}).then(()=>{
 			if(this.playList.length == 1){
 				console.log('playing first song');
 				this.play(this.playIndex);
 			}
 			return this.playList[this.playList.length-1].title;
+		}).catch(error=>{
+			console.log(error.stack);
+			throw error;
 		});
 
 		
