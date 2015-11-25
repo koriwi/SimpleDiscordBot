@@ -82,7 +82,7 @@ module.exports = class ytStream{
 		this.playing = true;
 
 		this.stream.on('error',(error)=>console.log(error));
-		this.client.voiceConnection.playRawStream(this.stream)
+		return this.client.voiceConnection.playRawStream(this.stream)
 		.then((intent) => {
 			intent.once('end',()=>{
 				console.log('track ended');
