@@ -93,7 +93,6 @@ module.exports = class ytStream{
 			console.log(error.stack);
 			throw error;
 		});
-		
 	}
 
 	playUrl(url){
