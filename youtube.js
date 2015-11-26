@@ -4,6 +4,7 @@ const youtubeStream = require('youtube-audio-stream');
 const _ = require('lodash');
 const ytdl = require('ytdl-core');
 const Promise = require('bluebird');
+const child = require('child_process')
 
 module.exports = class ytStream{
 
@@ -13,6 +14,27 @@ module.exports = class ytStream{
 		this.stream = false;
 		this.playList = new Array();
 		this.playing = false;
+	}
+
+	getStream(url){
+		child.spawn(
+			'avconv',
+			['-i', 'pipe:0', '-vn', '-f', 'mp3', 'pipe:1']
+		);
+
+		const stream = ytdl(url);
+
+		/*setTimeout(() => {
+			stream.unpipe();
+			child.kill();
+			out.destroy();
+			child.stdout.unpipe();
+		}, 100);*/
+		stream.on('error', error => console.error(1, error.stack));
+		stream.pipe(child.stdin);
+
+		child.on('error', error => console.error(2, error.stack));
+		return child.stdout;
 	}
 
 	stopPlay(){
@@ -78,7 +100,8 @@ module.exports = class ytStream{
 		if(this.stream)
 			this.stopPlay();
 
-		this.stream = youtubeStream(this.getUrl(index));
+		//this.stream = youtubeStream(this.getUrl(index));
+		this.stream = this.getStream(this.getUrl(index));
 		this.playing = true;
 
 		this.stream.on('error',(error)=>console.log(error));
