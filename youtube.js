@@ -16,11 +16,9 @@ module.exports = class ytStream{
 	}
 
 	stopPlay(){
-		if(this.client.voiceConnection && this.stream){
-			this.client.voiceConnection.stopPlaying();
-			this.playing = false;
-			console.log('stop signal');
-		}
+		this.playing = false;
+		console.log('stop signal');
+		this.client.voiceConnection.stopPlaying();
 	}
 
 	addToPlaylist(item){
@@ -61,32 +59,32 @@ module.exports = class ytStream{
 	}
 
 	play(index){
+
 		index = parseInt(index);
 		console.log('playing index: '+index);
 		let audio;
 		
-		if(index <0 || index >= this.playList.length || index == 'NaN')
+		if(index <0 || index >= this.playList.length || isNaN(index))
 			return Promise.reject(new RangeError('Song not in playlist'));
 
 		console.log('playing: '+this.playing);
 
 		if(index === this.playIndex && this.playing === true)
-			return Promise.reject(new Error('Song allready playing'));
+			return Promise.reject(new Error('Song already playing'));
 		
 		this.playIndex = index;
-
-		if(this.stream)
-			this.stopPlay();
+		this.stopPlay();
 
 		this.stream = youtubeStream(this.getUrl(index));
 		this.playing = true;
-
 		this.stream.on('error',(error)=>console.log(error));
+
 		return this.client.voiceConnection.playRawStream(this.stream)
 		.then((intent) => {
 			intent.once('end',()=>{
 				console.log('track ended');
-				this.nextTrack();
+				if(this.playing === true)
+					this.nextTrack();
 			});		
 			return this.playList[this.playIndex].title;
 		}).catch(error=>{
@@ -102,10 +100,9 @@ module.exports = class ytStream{
 				this.addToPlaylist(info);
 			}
 		}).then(()=>{
-			if(this.playList.length == 1){
-				console.log('playing first song');
-				this.play(this.playIndex);
-			}
+			if(this.playing == false)
+				this.play(this.playList.length-1);
+
 			return this.playList[this.playList.length-1].title;
 		});
 
